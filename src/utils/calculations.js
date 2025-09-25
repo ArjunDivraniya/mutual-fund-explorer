@@ -117,3 +117,38 @@ export const findNearestNav = (navs, date) => {
       annualizedReturn,
     };
   };
+
+  export const calculateLumpsum = (navs, amount, from, to) => {
+    if (!navs || navs.length === 0 || amount <= 0) {
+      return { status: "needs_review", message: "Insufficient data or invalid amount." };
+    }
+    const sorted = [...navs].filter(n => Number.isFinite(n.nav) && !Number.isNaN(n.date.getTime())).sort((a,b)=>a.date-b.date);
+    const startNav = findNearestNav(sorted, from);
+    const endNav = findNearestNav(sorted, to);
+    if (!startNav || !endNav || startNav.nav <= 0 || endNav.nav <= 0) {
+      return { status: "needs_review", message: "Invalid or insufficient NAV data for selected range." };
+    }
+    const units = amount / startNav.nav;
+    const currentValue = units * endNav.nav;
+    const absoluteReturn = ((currentValue - amount) / amount) * 100;
+    const years = (endNav.date.getTime() - startNav.date.getTime()) / (365.25 * 24 * 60 * 60 * 1000);
+    const annualizedReturn = years >= 1 ? (Math.pow(currentValue / amount, 1 / years) - 1) * 100 : absoluteReturn;
+
+    // Build a simple value-over-time series using available NAVs within range
+    const series = sorted
+      .filter(n => n.date >= startNav.date && n.date <= endNav.date)
+      .map(n => ({ date: n.date.toISOString().split("T")[0], value: units * n.nav, invested: amount }));
+
+    return {
+      totalInvested: amount,
+      currentValue,
+      totalUnits: units,
+      absoluteReturn,
+      annualizedReturn,
+      series,
+      startDate: startNav.date.toISOString().split("T")[0],
+      endDate: endNav.date.toISOString().split("T")[0],
+      startNAV: startNav.nav,
+      endNAV: endNav.nav,
+    };
+  };

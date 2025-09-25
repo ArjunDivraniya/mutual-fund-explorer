@@ -41,3 +41,12 @@ export const getSchemeReturns = async (code, query) => {
   }
   return res.json();
 };
+
+export const calculateLumpsumReturns = async (code, query) => {
+  const qs = new URLSearchParams(query ?? {}).toString();
+  const res = await fetch(`${BASE_URL}/scheme/${code}/lumpsum${qs ? `?${qs}` : ""}`);
+  if (!res.ok) {
+    throw new Error("Failed to calculate Lumpsum returns");
+  }
+  return res.json();
+};

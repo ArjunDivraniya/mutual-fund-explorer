@@ -35,3 +35,5 @@ export async function GET(request, { params }) {
     }, { status: 500 });
   }
 }
+
+// Lumpsum: GET /api/scheme/:code/lumpsum?amount=100000&from=YYYY-MM-DD&to=YYYY-MM-DD

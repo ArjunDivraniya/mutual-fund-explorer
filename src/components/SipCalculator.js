@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { calculateSipReturns } from "@/utils/api";
 import { LineChart } from "@mui/x-charts/LineChart";
-import { Box, Button, Grid, MenuItem, Select, TextField, Typography, Card, CardContent, Stack } from "@mui/material";
+import { Box, Button, Grid, MenuItem, Select, TextField, Typography, Card, CardContent, Stack, Tabs, Tab } from "@mui/material";
+import { calculateLumpsumReturns } from "@/utils/api";
 
 export function SipCalculator({ schemeCode }) {
   const [amount, setAmount] = useState(5000);
@@ -13,6 +14,7 @@ export function SipCalculator({ schemeCode }) {
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [mode, setMode] = useState("sip"); // sip | lumpsum
 
   const handleCalculate = async (e) => {
     e.preventDefault();
@@ -21,12 +23,22 @@ export function SipCalculator({ schemeCode }) {
     setResults(null);
 
     try {
-      const response = await calculateSipReturns(schemeCode, {
-        amount: parseFloat(amount),
-        frequency,
-        from: fromDate,
-        to: toDate,
-      });
+      const amt = parseFloat(amount);
+      let response;
+      if (mode === "sip") {
+        response = await calculateSipReturns(schemeCode, {
+          amount: amt,
+          frequency,
+          from: fromDate,
+          to: toDate,
+        });
+      } else {
+        response = await calculateLumpsumReturns(schemeCode, {
+          amount: String(amt),
+          from: fromDate,
+          to: toDate,
+        });
+      }
 
       if (response.status === "needs_review") {
         setError(response.message);
@@ -47,31 +59,34 @@ export function SipCalculator({ schemeCode }) {
 
   return (
     <Box>
-      <Typography variant="h5" fontWeight={600} mb={2}>
-        SIP Calculator
-      </Typography>
+      <Tabs value={mode} onChange={(_, v) => setMode(v)} sx={{ mb: 2 }}>
+        <Tab value="sip" label="SIP" />
+        <Tab value="lumpsum" label="Lumpsum" />
+      </Tabs>
       <Box component="form" onSubmit={handleCalculate}>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6}>
             <TextField
               type="number"
-              label="SIP Amount (₹)"
+              label={mode === "sip" ? "SIP Amount (₹)" : "Lumpsum Amount (₹)"}
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               fullWidth
               required
             />
           </Grid>
-          <Grid item xs={12} sm={6}>
-            <Select
-              value={frequency}
-              onChange={(e) => setFrequency(e.target.value)}
-              fullWidth
-              displayEmpty
-            >
-              <MenuItem value="monthly">Monthly</MenuItem>
-            </Select>
-          </Grid>
+          {mode === "sip" && (
+            <Grid item xs={12} sm={6}>
+              <Select
+                value={frequency}
+                onChange={(e) => setFrequency(e.target.value)}
+                fullWidth
+                displayEmpty
+              >
+                <MenuItem value="monthly">Monthly</MenuItem>
+              </Select>
+            </Grid>
+          )}
           <Grid item xs={12} sm={6}>
             <TextField
               type="date"
@@ -144,15 +159,27 @@ export function SipCalculator({ schemeCode }) {
             </CardContent>
           </Card>
           <Box sx={{ height: 320 }}>
-            <LineChart
-              xAxis={[{ data: x, scaleType: "time" }]}
-              series={[
-                { data: value, label: "Investment Value", color: "#4bc0c0" },
-                { data: invested, label: "Total Invested", color: "#ff6384" },
-              ]}
-              height={320}
-              margin={{ left: 40, right: 10, top: 10, bottom: 30 }}
-            />
+            {mode === "sip" ? (
+              <LineChart
+                xAxis={[{ data: x, scaleType: "time" }]}
+                series={[
+                  { data: value, label: "Investment Value", color: "#4bc0c0" },
+                  { data: invested, label: "Total Invested", color: "#ff6384" },
+                ]}
+                height={320}
+                margin={{ left: 40, right: 10, top: 10, bottom: 30 }}
+              />
+            ) : (
+              <LineChart
+                xAxis={[{ data: (results.series ?? []).map((d) => new Date(d.date)), scaleType: "time" }]}
+                series={[
+                  { data: (results.series ?? []).map((d) => d.value), label: "Value", color: "#4bc0c0" },
+                  { data: (results.series ?? []).map((d) => d.invested), label: "Invested", color: "#ff6384" },
+                ]}
+                height={320}
+                margin={{ left: 40, right: 10, top: 10, bottom: 30 }}
+              />
+            )}
           </Box>
         </Stack>
       )}

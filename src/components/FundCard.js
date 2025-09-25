@@ -1,14 +1,29 @@
 // src/components/FundCard.js
 import Link from "next/link";
+import { Card, CardActionArea, CardContent, Typography } from "@mui/material";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
 export function FundCard({ scheme }) {
   return (
-    <Link href={`/scheme/${scheme.schemeCode}`} passHref>
-      <div className="block cursor-pointer bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-          {scheme.schemeName}
-        </h3>
-      </div>
+    <Link href={`/funds/scheme/${scheme.schemeCode}`} passHref>
+      <Card elevation={2} sx={{ height: "100%", transition: "transform .2s", '&:hover': { transform: 'translateY(-2px)' } }}>
+        <CardActionArea sx={{ height: "100%" }}>
+          <CardContent>
+            <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+              {scheme.schemeName}
+            </Typography>
+            {scheme.fundHouse ? (
+              <Typography variant="body2" color="text.secondary">
+                {scheme.fundHouse}
+              </Typography>
+            ) : (
+              <Typography variant="caption" color="text.secondary" display="flex" alignItems="center" gap={0.5}>
+                View details <ArrowForwardIcon fontSize="inherit" />
+              </Typography>
+            )}
+          </CardContent>
+        </CardActionArea>
+      </Card>
     </Link>
   );
 }

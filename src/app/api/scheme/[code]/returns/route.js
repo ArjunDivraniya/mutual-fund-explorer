@@ -1,10 +1,9 @@
 // src/app/api/scheme/[code]/returns/route.js
-import { getSchemeData } from "@/utils/api";
 import { calculateReturns } from "@/utils/calculations";
-import { getPastDate } from "@/utils/date";
+import { getPastDate, parseMfapiDateString } from "@/utils/date";
 
 export async function GET(request, { params }) {
-  const { code } = params;
+  const { code } = await params;
   const { searchParams } = new URL(request.url);
   const period = searchParams.get("period");
   const from = searchParams.get("from");
@@ -15,13 +14,20 @@ export async function GET(request, { params }) {
   }
 
   try {
-    const schemeData = await getSchemeData(code);
-    if (!schemeData) {
+    const resp = await fetch(`https://api.mfapi.in/mf/${code}`);
+    if (!resp.ok) {
+      if (resp.status === 404) {
+        return Response.json({ message: "Scheme not found" }, { status: 404 });
+      }
+      throw new Error("Failed to fetch scheme data");
+    }
+    const schemeData = await resp.json();
+    if (!schemeData || !schemeData.data) {
       return Response.json({ message: "Scheme not found" }, { status: 404 });
     }
 
     const navData = schemeData.data.map((d) => ({
-      date: new Date(d.date),
+      date: parseMfapiDateString(d.date),
       nav: parseFloat(d.nav),
     }));
 

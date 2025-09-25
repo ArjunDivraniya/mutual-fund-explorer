@@ -7,7 +7,8 @@ export const getSchemes = async () => {
     throw new Error("Failed to fetch schemes");
   }
   const data = await res.json();
-  return data.data;
+  // Backend returns the array directly from MFAPI
+  return Array.isArray(data) ? data : data?.data ?? [];
 };
 
 export const getSchemeData = async (code) => {
@@ -30,4 +31,13 @@ export const calculateSipReturns = async (code, body) => {
   }
   const data = await res.json();
   return data;
+};
+
+export const getSchemeReturns = async (code, query) => {
+  const qs = new URLSearchParams(query ?? {}).toString();
+  const res = await fetch(`${BASE_URL}/scheme/${code}/returns${qs ? `?${qs}` : ""}`);
+  if (!res.ok) {
+    throw new Error("Failed to fetch scheme returns");
+  }
+  return res.json();
 };

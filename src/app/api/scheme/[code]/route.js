@@ -4,7 +4,7 @@ import { getCache, setCache } from "@/utils/cache";
 const API_URL = "https://api.mfapi.in/mf/";
 
 export async function GET(request, { params }) {
-  const { code } = params;
+  const { code } = await params;
 
   if (!code) {
     return Response.json({ message: "Scheme code is required" }, { status: 400 });

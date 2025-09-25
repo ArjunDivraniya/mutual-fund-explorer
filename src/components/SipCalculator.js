@@ -2,25 +2,8 @@
 "use client";
 import { useState } from "react";
 import { calculateSipReturns } from "@/utils/api";
-import { Line } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Tooltip,
-  Legend,
-} from "chart.js";
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Tooltip,
-  Legend
-);
+import { LineChart } from "@mui/x-charts/LineChart";
+import { Box, Button, Grid, MenuItem, Select, TextField, Typography, Card, CardContent, Stack } from "@mui/material";
 
 export function SipCalculator({ schemeCode }) {
   const [amount, setAmount] = useState(5000);
@@ -58,152 +41,121 @@ export function SipCalculator({ schemeCode }) {
     }
   };
 
-  const chartData = results
-    ? {
-        labels: results.investments.map((d) => d.date),
-        datasets: [
-          {
-            label: "Investment Value",
-            data: results.investments.map((d) => d.currentValue),
-            borderColor: "rgb(75, 192, 192)",
-            backgroundColor: "rgba(75, 192, 192, 0.5)",
-            tension: 0.1,
-            fill: true,
-          },
-          {
-            label: "Total Invested",
-            data: results.investments.map((d) => d.cumulativeInvested),
-            borderColor: "rgb(255, 99, 132)",
-            backgroundColor: "rgba(255, 99, 132, 0.5)",
-            tension: 0.1,
-          },
-        ],
-      }
-    : {
-        labels: [],
-        datasets: [],
-      };
-
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: "top",
-      },
-    },
-    scales: {
-      x: {
-        grid: { display: false },
-      },
-      y: {
-        grid: { color: "rgba(200, 200, 200, 0.2)" },
-      },
-    },
-  };
+  const x = results ? results.investments.map((d) => new Date(d.date)) : [];
+  const invested = results ? results.investments.map((d) => d.cumulativeInvested) : [];
+  const value = results ? results.investments.map((d) => d.currentValue) : [];
 
   return (
-    <div>
-      <h2 className="text-2xl font-semibold mb-4">SIP Calculator</h2>
-      <form onSubmit={handleCalculate} className="space-y-4">
-        <div>
-          <label htmlFor="amount" className="block text-sm font-medium">
-            SIP Amount (₹)
-          </label>
-          <input
-            type="number"
-            id="amount"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className="w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700 border-none mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="frequency" className="block text-sm font-medium">
-            Frequency
-          </label>
-          <select
-            id="frequency"
-            value={frequency}
-            onChange={(e) => setFrequency(e.target.value)}
-            className="w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700 border-none mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          >
-            <option value="monthly">Monthly</option>
-          </select>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="from" className="block text-sm font-medium">
-              Start Date
-            </label>
-            <input
+    <Box>
+      <Typography variant="h5" fontWeight={600} mb={2}>
+        SIP Calculator
+      </Typography>
+      <Box component="form" onSubmit={handleCalculate}>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              type="number"
+              label="SIP Amount (₹)"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              fullWidth
+              required
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Select
+              value={frequency}
+              onChange={(e) => setFrequency(e.target.value)}
+              fullWidth
+              displayEmpty
+            >
+              <MenuItem value="monthly">Monthly</MenuItem>
+            </Select>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
               type="date"
-              id="from"
+              label="Start Date"
               value={fromDate}
               onChange={(e) => setFromDate(e.target.value)}
-              className="w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700 border-none mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              fullWidth
+              InputLabelProps={{ shrink: true }}
               required
             />
-          </div>
-          <div>
-            <label htmlFor="to" className="block text-sm font-medium">
-              End Date
-            </label>
-            <input
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
               type="date"
-              id="to"
+              label="End Date"
               value={toDate}
               onChange={(e) => setToDate(e.target.value)}
-              className="w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-700 border-none mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              fullWidth
+              InputLabelProps={{ shrink: true }}
               required
             />
-          </div>
-        </div>
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full p-2 mt-4 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:bg-gray-400"
-        >
-          {loading ? "Calculating..." : "Calculate Returns"}
-        </button>
-      </form>
+          </Grid>
+          <Grid item xs={12}>
+            <Button type="submit" variant="contained" fullWidth disabled={loading}>
+              {loading ? "Calculating..." : "Calculate Returns"}
+            </Button>
+          </Grid>
+        </Grid>
+      </Box>
 
-      {error && <div className="mt-4 text-red-500 text-sm">{error}</div>}
+      {error && (
+        <Typography color="error" variant="body2" mt={2}>
+          {error}
+        </Typography>
+      )}
 
       {results && (
-        <div className="mt-6 space-y-4">
-          <div className="bg-blue-100 dark:bg-blue-900 p-4 rounded-lg">
-            <h3 className="text-xl font-semibold mb-2">Results</h3>
-            <div className="space-y-1">
-              <p>
-                Total Invested:{" "}
-                <span className="font-bold">₹{results.totalInvested.toFixed(2)}</span>
-              </p>
-              <p>
-                Current Value:{" "}
-                <span className="font-bold">₹{results.currentValue.toFixed(2)}</span>
-              </p>
-              <p>
-                Absolute Return:{" "}
-                <span className="font-bold">
-                  {results.absoluteReturn.toFixed(2)}%
-                </span>
-              </p>
-              <p>
-                Annualized Return:{" "}
-                <span className="font-bold">
-                  {results.annualizedReturn.toFixed(2)}%
-                </span>
-              </p>
-            </div>
-          </div>
-          <div className="w-full h-80">
-            <Line data={chartData} options={chartOptions} />
-          </div>
-        </div>
+        <Stack spacing={2} mt={3}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Results
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="text.secondary">
+                    Total Invested
+                  </Typography>
+                  <Typography variant="h6">₹{results.totalInvested.toFixed(2)}</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="text.secondary">
+                    Current Value
+                  </Typography>
+                  <Typography variant="h6">₹{results.currentValue.toFixed(2)}</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="text.secondary">
+                    Absolute Return
+                  </Typography>
+                  <Typography variant="h6">{results.absoluteReturn.toFixed(2)}%</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" color="text.secondary">
+                    Annualized Return
+                  </Typography>
+                  <Typography variant="h6">{results.annualizedReturn.toFixed(2)}%</Typography>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+          <Box sx={{ height: 320 }}>
+            <LineChart
+              xAxis={[{ data: x, scaleType: "time" }]}
+              series={[
+                { data: value, label: "Investment Value", color: "#4bc0c0" },
+                { data: invested, label: "Total Invested", color: "#ff6384" },
+              ]}
+              height={320}
+              margin={{ left: 40, right: 10, top: 10, bottom: 30 }}
+            />
+          </Box>
+        </Stack>
       )}
-    </div>
+    </Box>
   );
 }

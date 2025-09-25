@@ -1,16 +1,27 @@
 // src/utils/calculations.js
 
 export const findNearestNav = (navs, date) => {
-    let closest = null;
-    let minDiff = Infinity;
+    // Prefer the nearest earlier or same date; if none, choose the closest later one
+    let bestEarlier = null;
+    let minEarlierDiff = Infinity;
+    let bestLater = null;
+    let minLaterDiff = Infinity;
     for (const nav of navs) {
-      const diff = Math.abs(date.getTime() - nav.date.getTime());
-      if (diff < minDiff) {
-        minDiff = diff;
-        closest = nav;
+      const diff = nav.date.getTime() - date.getTime();
+      if (diff <= 0) {
+        const d = Math.abs(diff);
+        if (d < minEarlierDiff) {
+          minEarlierDiff = d;
+          bestEarlier = nav;
+        }
+      } else {
+        if (diff < minLaterDiff) {
+          minLaterDiff = diff;
+          bestLater = nav;
+        }
       }
     }
-    return closest;
+    return bestEarlier ?? bestLater;
   };
   
   export const calculateSip = (navs, amount, frequency, from, to) => {
@@ -19,10 +30,15 @@ export const findNearestNav = (navs, date) => {
     let datesToInvest = [];
     
     if (frequency === "monthly") {
-      let currentDate = new Date(from);
-      while (currentDate <= to) {
+      let currentDate = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+      const endDate = new Date(to.getFullYear(), to.getMonth(), to.getDate());
+      while (currentDate.getTime() <= endDate.getTime()) {
         datesToInvest.push(new Date(currentDate));
-        currentDate.setMonth(currentDate.getMonth() + 1);
+        const nextMonth = new Date(currentDate);
+        nextMonth.setMonth(nextMonth.getMonth() + 1);
+        // Keep same day-of-month when possible
+        nextMonth.setDate(Math.min(currentDate.getDate(), new Date(nextMonth.getFullYear(), nextMonth.getMonth() + 1, 0).getDate()));
+        currentDate = nextMonth;
       }
     }
   
@@ -30,8 +46,10 @@ export const findNearestNav = (navs, date) => {
     let cumulativeUnits = 0;
     let cumulativeInvested = 0;
   
+    // Ensure NAV array is sorted by date ascending for nearest earlier lookup
+    const sortedNavs = [...navs].sort((a, b) => a.date - b.date);
     for (const date of datesToInvest) {
-      const nav = findNearestNav(navs, date);
+      const nav = findNearestNav(sortedNavs, date);
       if (nav && nav.nav > 0) {
         const units = amount / nav.nav;
         totalUnits += units;
@@ -58,7 +76,9 @@ export const findNearestNav = (navs, date) => {
       };
     }
   
-    const latestNav = navs.length > 0 ? navs[0].nav : 0;
+    // NAVs from MFAPI are usually newest first; ensure we actually pick the latest (max date)
+    const latest = sortedNavs.reduce((a, b) => (a && a.date > b.date ? a : b), null);
+    const latestNav = latest ? latest.nav : 0;
     const currentValue = totalUnits * latestNav;
     const absoluteReturn = ((currentValue - totalInvested) / totalInvested) * 100;
   

@@ -3,7 +3,7 @@ import { calculateLumpsum } from "@/utils/calculations";
 import { parseMfapiDateString } from "@/utils/date";
 
 export async function GET(request, { params }) {
-  const { code } = await params;
+  const code = params.code;
   const { searchParams } = new URL(request.url);
   const amountParam = searchParams.get("amount");
   const from = searchParams.get("from");

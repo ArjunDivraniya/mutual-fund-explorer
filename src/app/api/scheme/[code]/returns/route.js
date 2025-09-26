@@ -3,7 +3,7 @@ import { calculateReturns } from "@/utils/calculations";
 import { getPastDate, parseMfapiDateString } from "@/utils/date";
 
 export async function GET(request, { params }) {
-  const { code } = await params;
+  const code = params.code;
   const { searchParams } = new URL(request.url);
   const period = searchParams.get("period");
   const from = searchParams.get("from");

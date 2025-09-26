@@ -3,7 +3,7 @@ import { calculateSip } from "@/utils/calculations";
 import { parseMfapiDateString } from "@/utils/date";
 
 export async function POST(request, { params }) {
-  const { code } = await params;
+  const code = params.code;
   const { amount, frequency, from, to } = await request.json();
 
   if (!code) {

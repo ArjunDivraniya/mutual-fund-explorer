@@ -7,10 +7,10 @@ import { Box, Button, Grid, MenuItem, Select, TextField, Typography, Card, CardC
 import { calculateLumpsumReturns } from "@/utils/api";
 
 export function SipCalculator({ schemeCode }) {
-  const [amount, setAmount] = useState(5000);
+  const [amount, setAmount] = useState(20000);
   const [frequency, setFrequency] = useState("monthly");
-  const [fromDate, setFromDate] = useState("2020-01-01");
-  const [toDate, setToDate] = useState("2023-12-31");
+  const [fromDate, setFromDate] = useState("2023-01-01");
+  const [toDate, setToDate] = useState("2025-12-31");
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);

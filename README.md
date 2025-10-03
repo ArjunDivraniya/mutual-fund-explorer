@@ -1,4 +1,4 @@
-# Mutual Fund Explorer (Next.js + MUI)
+  # Mutual Fund Explorer (Next.js + MUI)
 
 Discover, analyze, and simulate investments in Indian mutual funds using MFAPI.in. This app wraps public endpoints, provides a modern Material UI interface with charts, and includes an in-app SIP calculator based on historical NAV data.
 
